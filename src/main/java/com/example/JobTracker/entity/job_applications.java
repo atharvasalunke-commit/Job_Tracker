@@ -2,11 +2,16 @@ package com.example.JobTracker.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Entity
+@Table(name="job_applications")
+@EntityListeners(AuditingEntityListener.class)
 public class job_applications {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
@@ -20,23 +25,20 @@ public class job_applications {
     @NotNull
     private String  status;
     private String application_url;
+    @CreatedDate
+    @Column(nullable=false,updatable=false)
     private String created_at;
+    @LastModifiedDate
+    @Column(nullable=false)
     private String updated_at;
     private int is_deleted;
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public users getUser() {
         return user;
-    }
-
-    public void setUser(users user) {
-        this.user = user;
     }
 
     public String getCompany_name() {

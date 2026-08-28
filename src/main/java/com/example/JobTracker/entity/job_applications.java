@@ -41,6 +41,10 @@ public class job_applications {
         return user;
     }
 
+    public void setUser(users user) {
+        this.user = user;
+    }
+
     public String getCompany_name() {
         return company_name;
     }

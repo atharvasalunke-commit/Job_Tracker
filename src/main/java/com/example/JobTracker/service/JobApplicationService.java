@@ -5,7 +5,7 @@ import com.example.JobTracker.dto.JobApplicationRequestDto;
 import com.example.JobTracker.dto.JobApplicationResponseDto;
 import com.example.JobTracker.entity.job_applications;
 import com.example.JobTracker.globalexception.ResourceNotFound;
-import com.example.JobTracker.mapper.JobApplicationMapper;
+import com.example.JobTracker.mapper.Mapper;
 import com.example.JobTracker.repository.Repository2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,10 +17,10 @@ import java.util.Optional;
 @Service
 public class JobApplicationService {
     private Repository2 Repo;
-    private JobApplicationMapper mapper;
-    public JobApplicationService(Repository2 Repo,JobApplicationMapper mapper){
+    private Mapper mapper;
+    public JobApplicationService(Repository2 Repo, Mapper mapper){
         this.Repo=Repo;
-        this.mapper=mapper;;
+        this.mapper=mapper;
     }
     public JobApplicationResponseDto CreateJobApplication(CreateJobApplicationRequestDto Jard){
         job_applications target=mapper.toEntity2(Jard);
@@ -47,12 +47,12 @@ public class JobApplicationService {
     }
     public List<JobApplicationResponseDto> GetJobApplications(int page,int size){
         Pageable pageable = PageRequest.of(page,size);
-        Page<job_applications>job_application=Repo.findAll(pageable);
+        Page<job_applications>job_application=Repo.findAllActive(pageable);
         if(!job_application.isEmpty()) {
            List<JobApplicationResponseDto> Response = mapper.toListResponseDto(job_application);
             return Response;
         }
-        return null;
+        throw new ResourceNotFound("Could load any applications");
     }
     public JobApplicationResponseDto updateJobApplication(Long id, JobApplicationRequestDto Jard){
         Optional<job_applications> target=Repo.findById(id);

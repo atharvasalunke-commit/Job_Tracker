@@ -11,12 +11,15 @@ public class users {
 @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
 @Column(unique=true,nullable=false)
+private String username;
+@Column(unique=true,nullable=false)
     private String Email;
 @NotNull
     private String password_Hash;
 @NotNull
     private String Role;
-    private String created_at;
+@NotNull
+private String created_at;
 
     public Long getId() {
         return id;
@@ -59,5 +62,11 @@ public class users {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         this.created_at = (LocalDateTime.now()).format(formatter);
     }
+    public String getUsername() {
+        return username;
+    }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
 }

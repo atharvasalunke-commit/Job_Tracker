@@ -1,4 +1,4 @@
-/*package com.example.JobTracker.globalexception;
+package com.example.JobTracker.globalexception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -9,4 +9,4 @@ public class ResourceAlreadyExists extends RuntimeException{
         super(msg);
     }
 
-}*/
+}

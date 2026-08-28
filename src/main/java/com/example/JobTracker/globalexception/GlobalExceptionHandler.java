@@ -23,4 +23,8 @@ public class GlobalExceptionHandler {
         }
         return ResponseEntity.status(400).body(errors);
     }
+    @ExceptionHandler(ResourceAlreadyExists.class)
+    public ResponseEntity<String>resourceAlreadyExists(ResourceAlreadyExists ex){
+        return ResponseEntity.status(409).body(ex.getMessage());
+    }
 }

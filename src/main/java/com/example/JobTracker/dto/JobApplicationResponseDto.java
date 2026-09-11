@@ -8,9 +8,14 @@ public class JobApplicationResponseDto {
     private String application_url;
     private String created_at;
     private String updated_at;
-    private String message;;
+    private String message;
+    private String  job_description;
     public Long getId() {
         return id;
+    }
+
+    public void setJob_description(String job_description) {
+        this.job_description = job_description;
     }
 
     public void setId(Long id) {

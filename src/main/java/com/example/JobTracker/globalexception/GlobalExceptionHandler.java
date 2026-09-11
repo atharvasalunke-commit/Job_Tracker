@@ -4,7 +4,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
@@ -26,5 +25,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceAlreadyExists.class)
     public ResponseEntity<String>resourceAlreadyExists(ResourceAlreadyExists ex){
         return ResponseEntity.status(409).body(ex.getMessage());
+    }
+    @ExceptionHandler(InValidUrl.class)
+    public ResponseEntity<String>InValidUrl(InValidUrl  ex){
+        return ResponseEntity.status(503).body(ex.getMessage());
     }
 }

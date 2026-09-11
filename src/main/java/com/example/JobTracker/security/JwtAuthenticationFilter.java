@@ -1,6 +1,6 @@
 package com.example.JobTracker.security;
 
-import com.example.JobTracker.entity.users;
+import com.example.JobTracker.entity.User;
 import com.example.JobTracker.globalexception.ResourceNotFound;
 import com.example.JobTracker.repository.Repository1;
 import io.jsonwebtoken.JwtException;
@@ -39,7 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String username = jwtservice.extractUsername(jwt);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                users user = repo.findByUsername(username).orElseThrow(()->new ResourceNotFound("Does not exist user by this username"));
+                User user = repo.findByUsername(username).orElseThrow(()->new ResourceNotFound("User not found with this username"));
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(user, null, List.of(new SimpleGrantedAuthority("ROLE_"+user.getRole())));
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(Request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);

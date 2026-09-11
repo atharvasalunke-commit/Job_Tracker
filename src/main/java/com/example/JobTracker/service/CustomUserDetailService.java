@@ -1,6 +1,6 @@
 package com.example.JobTracker.service;
 
-import com.example.JobTracker.entity.users;
+import com.example.JobTracker.entity.User;
 
 import com.example.JobTracker.globalexception.ResourceNotFound;
 import com.example.JobTracker.repository.Repository1;
@@ -21,9 +21,9 @@ public class CustomUserDetailService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        users user=repo.findByUsername(username).orElseThrow(()->new ResourceNotFound("Does not exist user by this username"));
+        User user=repo.findByUsername(username).orElseThrow(()->new ResourceNotFound("User not found with this username"));
         return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),user.getPassword_Hash(), List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                user.getUsername(),user.getPassword_Hash(), List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
         );
     }
 }

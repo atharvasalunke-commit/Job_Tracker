@@ -5,13 +5,11 @@ import jakarta.validation.constraints.Size;
 
 public class AccountRequest {
     @NotEmpty
-    @Size(min=3,max=100,message="username should have atleast number of characters between 3 and 100")
+    @Size(min=3,max=100,message="username should have at least 3 and 100")
     private String username;
     @NotEmpty
-    @Size(min=3,max=100,message="password should have atleast number of characters between 3 and 100")
+    @Size(min=3,max=100,message="password should have at least 3 and 100")
     private  String password;
-    @NotEmpty
-    @Size(min=3,max=100,message="email should have atleast number of characters between 3 and 100")
     private String email;
 
     public String getEmail() {

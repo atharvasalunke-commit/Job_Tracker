@@ -44,3 +44,10 @@ Thumbs.db
 *.properties.local
 *.yml.local
 *.md
+# Python
+scraper-service/venv/
+scraper-service/__pycache__/
+*.pyc
+
+# Temporary Exports
+claude_export/

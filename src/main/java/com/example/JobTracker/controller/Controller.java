@@ -34,7 +34,7 @@ public class Controller {
     }
     @PostMapping
     public ResponseEntity<JobApplicationResponseDto> postController(@Valid @RequestBody CreateJobApplicationRequestDto Jard){
-        JobApplicationResponseDto Final_Body=Service.CreateJobApplication(Jard);
+        JobApplicationResponseDto Final_Body=Service.createJobApplication(Jard);
         return ResponseEntity.status(201).body(Final_Body);
     }
     @PutMapping("/{id}")

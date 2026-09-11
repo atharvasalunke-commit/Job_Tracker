@@ -1,11 +1,9 @@
 package com.example.JobTracker.mapper;
 
-import com.example.JobTracker.dto.AccountRequest;
-import com.example.JobTracker.dto.CreateJobApplicationRequestDto;
-import com.example.JobTracker.dto.JobApplicationRequestDto;
-import com.example.JobTracker.dto.JobApplicationResponseDto;
-import com.example.JobTracker.entity.job_applications;
-import com.example.JobTracker.entity.users;
+import com.example.JobTracker.dto.*;
+import com.example.JobTracker.entity.JobApplication;
+import com.example.JobTracker.entity.ScraperConfig;
+import com.example.JobTracker.entity.User;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
@@ -15,10 +13,14 @@ import java.util.List;
 
 @org.mapstruct.Mapper(componentModel="spring")
 public interface Mapper {
-    job_applications toEntity2(CreateJobApplicationRequestDto source);
-    JobApplicationResponseDto toResponseDto(job_applications source);
-    List<JobApplicationResponseDto> toListResponseDto(Page<job_applications> source);
+    JobApplication toEntity2(ScrapedJobDto source);
+    JobApplicationResponseDto toResponseDto(JobApplication source);
+    List<JobApplicationResponseDto> toListResponseDto(Page<JobApplication> source);
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateEntity(JobApplicationRequestDto Jard, @MappingTarget job_applications ja);
-    users toUser(AccountRequest source);
+    void updateEntity(JobApplicationRequestDto Jard, @MappingTarget JobApplication ja);
+    User toUser(AccountRequest source);
+    JobApplication toEntity(CreateJobApplicationRequestDto source);
+    void updateScrapedConfigs(ScraperConfig source,@MappingTarget ScraperConfig target);
+    ScraperConfig toScraperConfigs(ScraperConfigsDto source);
+    ScraperConfigsDto toScraperConfigsDto(ScraperConfig source);
 }

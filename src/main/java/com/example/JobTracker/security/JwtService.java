@@ -1,12 +1,11 @@
 package com.example.JobTracker.security;
 
-import com.example.JobTracker.entity.users;
+import com.example.JobTracker.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -40,10 +39,10 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
     }
-    public String generateToken(users user){
+    public String generateToken(User user){
         return generateToken(new HashMap<>(),user);
     }
-    public String generateToken(HashMap<String,Object>Claims, users user){
+    public String generateToken(HashMap<String,Object>Claims, User user){
         return Jwts.builder()
                 .claims(Claims)
                 .subject(user.getUsername())

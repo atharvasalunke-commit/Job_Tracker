@@ -10,44 +10,45 @@ buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 
-# IntelliJ IDEA
+# IDEs (IntelliJ, Eclipse, VS Code)
 .idea/
 *.iws
 *.iml
 *.ipr
 out/
-
-# Eclipse / VS Code (Just in case you switch IDEs)
-.apt_generated
 .classpath
-.factorypath
 .project
 .settings
-.springBeans
-.sts4-cache
 .vscode/
 
 # OS specific files
 .DS_Store
 .DS_Store?
 ._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
+ehthumbs.db
 
-# Logs
+# Logs and Runtime
 *.log
+*.pid
 
-# Environment variables & Secrets (CRITICAL)
+# Environment variables & Secrets
 .env
 *.properties.local
 *.yml.local
-*.md
-# Python
+
+# Python Scraper
 scraper-service/venv/
+scraper-service/env/
 scraper-service/__pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
 
-# Temporary Exports
+# Custom Temporary Export Folders
 claude_export/
+chatgpt_export/
+generate_all_code.sh
+
+# Do NOT ignore the README if it exists
+!README.md

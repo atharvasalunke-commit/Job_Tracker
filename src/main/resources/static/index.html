@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section id="auth-view" class="auth-card">
+      <p class="eyebrow">JOB TRACKER</p>
+      <h1>Keep your search organised.</h1>
+      <p class="muted">A small dashboard for scraping and tracking opportunities.</p>
+
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-auth-tab="login">Sign in</button>
+        <button class="tab" data-auth-tab="register">Create account</button>
+      </div>
+
+      <form id="login-form" class="form-stack">
+        <label>Username <input name="username" autocomplete="username" required></label>
+        <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Sign in</button>
+      </form>
+
+      <form id="register-form" class="form-stack hidden">
+        <label>Username <input name="username" autocomplete="username" minlength="3" required></label>
+        <label>Email <input name="email" type="email" autocomplete="email" required></label>
+        <label>Password <input name="password" type="password" autocomplete="new-password" minlength="3" required></label>
+        <button type="submit">Create user account</button>
+      </form>
+      <p id="auth-message" class="message" aria-live="polite"></p>
+    </section>
+
+    <section id="app-view" class="hidden">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">JOB TRACKER</p>
+          <h1>Your applications</h1>
+        </div>
+        <button id="logout-button" class="button-secondary">Log out</button>
+      </header>
+
+      <p id="app-message" class="message" aria-live="polite"></p>
+
+      <div class="dashboard-grid">
+        <section class="panel">
+          <h2>Find jobs</h2>
+          <p class="muted">Search a supported site and save matched listings.</p>
+          <form id="scrape-form" class="form-stack">
+            <label>Job site
+              <select id="job-site" name="domain_name" required>
+                <option value="internshala">Internshala</option>
+                <option value="authenticjobs">Authentic Jobs</option>
+              </select>
+            </label>
+            <label>Skills <input name="skills" placeholder="Java, Spring Boot, MySQL"></label>
+            <label>Type
+              <select id="job-type" name="job_type">
+                <option value="internship">Internship</option>
+                <option value="job">Job</option>
+              </select>
+            </label>
+            <p id="job-type-hint" class="muted"></p>
+            <button type="submit" class="scrape-button">Scrape and save</button>
+          </form>
+        </section>
+
+        <section class="panel admin-panel">
+          <h2>Admin tools</h2>
+          <p class="muted">These actions require an ADMIN account.</p>
+          <details>
+            <summary>Add application manually</summary>
+            <form id="create-form" class="form-stack compact-form">
+              <label>Company <input name="company_name" required></label>
+              <label>Job title <input name="job_title" required></label>
+              <label>Application URL <input name="application_url" type="url" required></label>
+              <label>Description <textarea name="job_description" required></textarea></label>
+              <input name="status" value="Not applied" type="hidden">
+              <button type="submit">Save application</button>
+            </form>
+          </details>
+          <details>
+            <summary>Configure scraper selectors</summary>
+            <form id="config-form" class="form-stack compact-form">
+              <label>Site <input name="domain_name" placeholder="internshala" required></label>
+              <label>Card selector <input name="card_selector" required></label>
+              <label>Title selector <input name="title_selector" required></label>
+              <label>Company selector <input name="company_selector" required></label>
+              <label>Link selector <input name="link_selector" required></label>
+              <label>Requirements selector <input name="requirements_selector" required></label>
+              <button type="submit">Save configuration</button>
+            </form>
+          </details>
+        </section>
+      </div>
+
+      <section class="jobs-section">
+        <div class="section-heading">
+          <div><h2>Saved applications</h2><p class="muted">Update a status or remove an application when you no longer need it.</p></div>
+          <button id="refresh-button" class="button-secondary">Refresh</button>
+        </div>
+        <div id="jobs-list" class="jobs-list"></div>
+        <div class="pagination" aria-label="Job application pagination">
+          <label>Jobs per page
+            <select id="page-size">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </label>
+          <div class="page-actions">
+            <button id="previous-page" class="button-secondary" type="button">Previous</button>
+            <span id="page-indicator">Page 1</span>
+            <button id="next-page" class="button-secondary" type="button">Next</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

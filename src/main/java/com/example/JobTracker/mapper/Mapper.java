@@ -1,5 +1,6 @@
 package com.example.JobTracker.mapper;
 
+import lombok.RequiredArgsConstructor;
 import com.example.JobTracker.dto.*;
 import com.example.JobTracker.entity.JobApplication;
 import com.example.JobTracker.entity.ScraperConfig;
@@ -8,10 +9,9 @@ import org.mapstruct.BeanMapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.data.domain.Page;
-
 import java.util.List;
-
 @org.mapstruct.Mapper(componentModel="spring")
+
 public interface Mapper {
     JobApplication toEntity2(ScrapedJobDto source);
     JobApplicationResponseDto toResponseDto(JobApplication source);

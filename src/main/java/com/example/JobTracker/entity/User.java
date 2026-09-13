@@ -18,7 +18,8 @@ private String username;
 @NotNull
     private String password_Hash;
 @NotNull
-    private String Role;
+    @Enumerated(EnumType.STRING)
+    private Role role;
 @NotNull
 private String created_at;
 
@@ -46,12 +47,12 @@ private String created_at;
         this.password_Hash = password_Hash;
     }
 
-    public String getRole() {
-        return Role;
+    public Role getRole() {
+        return role;
     }
 
-    public void setRole(String role) {
-        Role = role;
+    public void setRole(Role role) {
+        this.role = role;
     }
 
     public String getCreated_at() {

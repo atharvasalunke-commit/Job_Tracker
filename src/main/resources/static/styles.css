@@ -1,0 +1,421 @@
+/* ============================================================
+   Colors and global resets
+   ============================================================ */
+:root {
+    --ink: #172033;
+    --muted: #64748b;
+    --surface: #ffffff;
+    --border: #dbe3ef;
+    --brand: #2563eb;
+    --brand-dark: #1d4ed8;
+    --danger: #b91c1c;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--ink);
+    background: #f3f6fb;
+    font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+
+/* ============================================================
+   Form controls
+   ============================================================ */
+button, input, select, textarea {
+    font: inherit;
+}
+
+button {
+    border: 0;
+    border-radius: 8px;
+    padding: .7rem 1rem;
+    color: white;
+    background: var(--brand);
+    font-weight: 650;
+    cursor: pointer;
+}
+
+button:hover {
+    background: var(--brand-dark);
+}
+
+button:disabled {
+    cursor: wait;
+    opacity: .75;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: .62rem .7rem;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--ink);
+    background: white;
+    font-weight: 400;
+}
+
+textarea {
+    min-height: 5rem;
+    resize: vertical;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: 2px solid #93c5fd;
+    outline-offset: 1px;
+    border-color: var(--brand);
+}
+
+.form-stack {
+    display: grid;
+    gap: .85rem;
+}
+
+label {
+    display: grid;
+    gap: .35rem;
+    color: #334155;
+    font-size: .9rem;
+    font-weight: 650;
+}
+
+
+/* ============================================================
+   Page layout
+   ============================================================ */
+.shell {
+    width: min(1120px, calc(100% - 2rem));
+    margin: 0 auto;
+    padding: 3rem 0;
+}
+
+h1, h2, p {
+    margin-top: 0;
+}
+
+h1 {
+    margin-bottom: .35rem;
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+}
+
+h2 {
+    margin-bottom: .25rem;
+    font-size: 1.2rem;
+}
+
+.eyebrow {
+    margin-bottom: .45rem;
+    color: var(--brand);
+    font-size: .75rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+.muted {
+    color: var(--muted);
+    font-size: .92rem;
+}
+
+.hidden {
+    display: none !important;
+}
+
+
+/* ============================================================
+   Auth screen (login / register card + tabs)
+   ============================================================ */
+.auth-card {
+    width: min(460px, 100%);
+    margin: 7vh auto;
+    padding: 2rem;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: 0 16px 45px rgb(15 23 42 / 8%);
+}
+
+.tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .4rem;
+    margin: 1.7rem 0 1rem;
+    padding: .3rem;
+    border-radius: 9px;
+    background: #edf2f9;
+}
+
+.tab {
+    color: var(--muted);
+    background: transparent;
+}
+
+.tab.active {
+    color: var(--ink);
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgb(15 23 42 / 12%);
+}
+
+
+/* ============================================================
+   Status messages (errors / success text under forms)
+   ============================================================ */
+.message {
+    min-height: 1.5rem;
+    margin: 1rem 0 0;
+    color: var(--danger);
+    font-size: .9rem;
+}
+
+.message.success {
+    color: #15803d;
+    animation: pop-in .28s ease-out;
+}
+
+
+/* ============================================================
+   Loading spinner on the "Scrape and save" button
+   ============================================================ */
+.scrape-button.is-loading {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+}
+
+.scrape-button.is-loading::before {
+    width: .85rem;
+    height: .85rem;
+    border: 2px solid rgb(255 255 255 / 45%);
+    border-top-color: white;
+    border-radius: 50%;
+    content: "";
+    animation: spin .75s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pop-in {
+    0%   { transform: scale(.96); opacity: .2; }
+    70%  { transform: scale(1.02); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+
+/* ============================================================
+   Dashboard header + generic panels
+   ============================================================ */
+.app-header, .section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.app-header {
+    margin-bottom: 2rem;
+}
+
+.button-secondary {
+    color: #334155;
+    border: 1px solid var(--border);
+    background: white;
+}
+
+.button-secondary:hover {
+    background: #f8fafc;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.dashboard-grid.single-column {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.panel, .jobs-section {
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.admin-panel details + details {
+    margin-top: .8rem;
+}
+
+.admin-panel summary {
+    cursor: pointer;
+    color: var(--brand);
+    font-weight: 650;
+}
+
+.compact-form {
+    margin-top: .8rem;
+}
+
+
+/* ============================================================
+   Job list + pagination
+   ============================================================ */
+.jobs-section {
+    margin-top: 1rem;
+}
+
+.jobs-list {
+    display: grid;
+    gap: .8rem;
+    margin-top: 1rem;
+}
+
+.pagination {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.pagination label {
+    width: 9rem;
+}
+
+.page-actions {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+}
+
+.page-actions span {
+    min-width: 3.7rem;
+    color: var(--muted);
+    text-align: center;
+    font-size: .9rem;
+}
+
+
+/* ============================================================
+   Individual job card
+   ============================================================ */
+.job-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+}
+
+.job-card h3 {
+    margin: 0;
+}
+
+.job-meta {
+    margin: .25rem 0;
+    color: var(--muted);
+}
+
+.badge {
+    display: inline-block;
+    margin-top: .3rem;
+    padding: .18rem .55rem;
+    border-radius: 999px;
+    color: #1e40af;
+    background: #dbeafe;
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.job-actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.delete-button {
+    color: var(--danger);
+    border: 1px solid #fecaca;
+    background: #fff;
+}
+
+.delete-button:hover {
+    background: #fef2f2;
+}
+
+.empty {
+    padding: 1.5rem;
+    color: var(--muted);
+    text-align: center;
+}
+
+.icon-button {
+    padding: 0 .4rem;
+    color: var(--muted);
+    background: transparent;
+    font-size: 1.7rem;
+    line-height: 1;
+}
+
+.icon-button:hover {
+    color: var(--ink);
+    background: transparent;
+}
+
+
+/* ============================================================
+   Dialog (kept for parity with the original file, even if no
+   <dialog> element currently uses it)
+   ============================================================ */
+dialog {
+    width: min(500px, calc(100% - 2rem));
+    border: 0;
+    border-radius: 12px;
+    padding: 1.3rem;
+    box-shadow: 0 20px 60px rgb(15 23 42 / 30%);
+}
+
+dialog::backdrop {
+    background: rgb(15 23 42 / 45%);
+}
+
+
+/* ============================================================
+   Mobile layout
+   ============================================================ */
+@media (max-width: 680px) {
+    .shell {
+        padding: 1.25rem 0;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .app-header, .section-heading {
+        align-items: flex-start;
+    }
+
+    .pagination {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .job-card {
+        grid-template-columns: 1fr;
+    }
+
+    .job-actions {
+        justify-content: flex-end;
+    }
+}

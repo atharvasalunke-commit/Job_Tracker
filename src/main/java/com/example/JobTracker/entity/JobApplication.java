@@ -1,5 +1,9 @@
 package com.example.JobTracker.entity;
 
+import lombok.Getter;
+import lombok.Setter;
+
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.annotation.CreatedDate;
@@ -12,6 +16,8 @@ import java.time.format.DateTimeFormatter;
 @Entity
 @Table(name="job_applications")
 @EntityListeners(AuditingEntityListener.class)
+@Getter
+@Setter
 public class JobApplication {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
@@ -27,80 +33,45 @@ public class JobApplication {
     @Column(nullable=false)
     private String updated_at;
     private int is_deleted;
+    private String code;
     private String job_description;
 
-    public String getJob_description() {
-        return job_description;
-    }
-    public void setJob_description(String job_description) {
-        this.job_description = job_description;
-    }
-    public Long getId() {
-        return id;
-    }
-    public User getUser() {
-        return user;
-    }
-    public void setUser(User user) {
-        this.user = user;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public String getCompany_name() {
-        return company_name;
-    }
-    public void setCompany_name(String company_name) {
-        this.company_name = company_name;
-    }
-    public String getJob_title() {
-        return job_title;
-    }
-    public void setJob_title(String job_title) {
-        this.job_title = job_title;
-    }
-    public String getStatus() {
-        return status;
-    }
-    public void setStatus(String status) {
-        this.status = status;
-    }
-    public String getApplication_url() {
-        return application_url;
-    }
-    public void setApplication_url(String application_url) {
-        this.application_url = application_url;
-    }
-    public void setCreated_at(String created_at) {
-        this.created_at = created_at;
-    }
-    public void setUpdated_at(String updated_at) {
-        this.updated_at = updated_at;
-    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
-    public String getCreated_at() {
-        return created_at;
-    }
+    
 
     public void setCreated_at() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         this.created_at= LocalDateTime.now().format(formatter);
     }
 
-    public String getUpdated_at() {
-        return updated_at;
-    }
+    
 
     public void setUpdated_at() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         this.updated_at= LocalDateTime.now().format(formatter);
     }
 
-    public int getIs_deleted() {
-        return is_deleted;
-    }
+    
 
-    public void setIs_deleted(int is_deleted) {
-        this.is_deleted = is_deleted;
-    }
+    
+
+    
+
+    
 }

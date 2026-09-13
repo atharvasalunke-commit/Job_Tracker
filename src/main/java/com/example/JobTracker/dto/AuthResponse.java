@@ -1,21 +1,14 @@
 package com.example.JobTracker.dto;
 
+import lombok.Data;
+
+@Data
 public class AuthResponse {
     private String token;
-    public AuthResponse(){
-
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
+    private String role;
+    public AuthResponse(){}
+    public AuthResponse(String token, String role){
         this.token = token;
+        this.role = role;
     }
-
-    public AuthResponse(String token){
-        this.token=token;
-    }
-
 }

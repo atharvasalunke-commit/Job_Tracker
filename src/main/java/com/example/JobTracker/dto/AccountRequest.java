@@ -16,4 +16,7 @@ public class AccountRequest {
     @NotEmpty
     @jakarta.validation.constraints.Email(message="Invalid email format")
     private String email;
+    public AccountRequest(){}
+    public AccountRequest(String atharva, int i, String mail) {
+    }
 }

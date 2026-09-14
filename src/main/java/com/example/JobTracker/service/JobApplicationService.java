@@ -28,7 +28,7 @@ public class JobApplicationService {
 
     public JobApplicationResponseDto createJobApplication(CreateJobApplicationRequestDto dto) throws Exception {
         JobApplication target = mapper.toEntity(dto);
-        prepareNewApplication(target, authService.getCurrentUser());
+        prepareNewObject(target, authService.getCurrentUser());
         if (validator.isDuplicate(target.getCode(), target.getUser())) {
             throw new ResourceAlreadyExists("You have already saved this job application.");
         }
@@ -40,7 +40,7 @@ public class JobApplicationService {
 
     public JobApplicationResponseDto createScrapedJob(ScrapedJobDto Sjd) throws Exception {
         JobApplication target = mapper.toEntity2(Sjd);
-        prepareNewApplication(target, authService.getCurrentUser());
+        prepareNewObject(target, authService.getCurrentUser());
         if (validator.isDuplicate(target.getCode(), target.getUser())) {
             throw new com.example.JobTracker.exception.ResourceAlreadyExists("You have already saved this job application.");
         }
@@ -92,7 +92,7 @@ public class JobApplicationService {
         JobApplication body = repo.save(target);
         return mapper.toResponseDto(body);
     }
-    private void prepareNewApplication(JobApplication target, User user) throws Exception {
+    private void prepareNewObject(JobApplication target, User user) throws Exception {
         target.setCreated_at();
         target.setUpdated_at();
         target.setIs_deleted(0);

@@ -14,7 +14,7 @@ public class User {
 @Column(unique=true,nullable=false)
 private String username;
 @Column(unique=true,nullable=false)
-    private String Email;
+    private String email;
 @NotNull
     private String password_Hash;
 @NotNull
@@ -23,20 +23,20 @@ private String username;
 @NotNull
 private String created_at;
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getEmail() {
-        return Email;
-    }
-
-    public void setEmail(String email) {
-        Email = email;
     }
 
     public String getPassword_Hash() {

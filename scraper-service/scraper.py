@@ -61,6 +61,11 @@ def scraper(url,rules,user_skills,job_type):
                 print("No job cards found. Selectors may need to be regenerated.")
                 return []
 
+            # DEBUG: Print first card's HTML so we can see the correct selectors
+            if job_cards:
+                first_card_html = job_cards[0].inner_html()
+                print(f"DEBUG FIRST CARD HTML:\n{first_card_html[:3000]}")
+
             extracted_count=0
 
             for i,card in enumerate(job_cards[:len(job_cards)]):

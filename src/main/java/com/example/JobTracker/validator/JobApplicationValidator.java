@@ -16,7 +16,7 @@ public class JobApplicationValidator {
     private final BasicSha256 sha256;
 
     public String generateJobCode(JobApplication target) throws Exception {
-        String code = target.getJob_title() + target.getCompany_name() + target.getJob_description();
+        String code = target.getApplication_url();
         return sha256.toSha256(code);
     }
 

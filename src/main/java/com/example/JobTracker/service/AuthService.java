@@ -37,7 +37,7 @@ public class AuthService {
            throw(new ResourceAlreadyExists("Email already exists"));
        }
        User user = new User();
-       user=prepareNewAccount(Request,user);
+       prepareNewAccount(Request,user);
        repo.save(user);
        String jwt=jwtService.generateToken(user);
        return new AuthResponse(jwt, user.getRole().name());
@@ -53,12 +53,11 @@ public class AuthService {
     public User getCurrentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
-    User prepareNewAccount(AccountRequest Request,User user){
+    void prepareNewAccount(AccountRequest Request,User user){
         user.setUsername(Request.getUsername());
         user.setEmail(Request.getEmail());
         user.setPassword_Hash(passwordencoder.encode(Request.getPassword()));
         user.setRole(Role.USER);
         user.setCreated_at();
-        return user;
     }
 }

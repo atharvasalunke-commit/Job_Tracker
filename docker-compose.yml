@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mysql-db:
+    image: mysql:8.4
+    container_name: jobtracker-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: Job_Info
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  scraper-service:
+    build:
+      context: ./scraper-service
+    container_name: jobtracker-scraper
+    ports:
+      - "8001:8001"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+
+  jobtracker-backend:
+    build:
+      context: .
+    container_name: jobtracker-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_URL=jdbc:mysql://mysql-db:3306/Job_Info?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SCRAPER_URL=http://scraper-service:8001
+      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      scraper-service:
+        condition: service_started
+
+volumes:
+  mysql-data:

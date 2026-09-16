@@ -34,6 +34,8 @@ public class JobApplication {
     private String updated_at;
     private int is_deleted;
     private String code;
+    
+    @Column(columnDefinition = "TEXT")
     private String job_description;
 
     

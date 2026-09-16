@@ -2,7 +2,10 @@ import os
 import json
 import google.generativeai as genai
 from playwright.sync_api import sync_playwright
+from dotenv import load_dotenv
+
 def generate_dom_patterns(url :str):
+    load_dotenv("../.env", override=False)
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY environment variables is not set")
@@ -17,7 +20,6 @@ def generate_dom_patterns(url :str):
             page.goto(url,wait_until="domcontentloaded",timeout=60000)
             page.wait_for_timeout(3000)#waiting for react/js to hydrate
             html_content=page.content()
-            print(html_content+"hi")
         finally:
             browser.close()
     print("Html extracted now asking gemini to find CSS selectors")
@@ -37,9 +39,13 @@ def generate_dom_patterns(url :str):
      HTML snippet:
     {html_content[:150000]}
     """
-    response=model.generate_content(prompt)
-    print(response)
-    raw_text=response.text.strip()
+    try:
+        response = model.generate_content(prompt)
+        print(response)
+        raw_text = response.text.strip()
+    except Exception as e:
+        print(f"CRITICAL GEMINI ERROR: {str(e)}")
+        raise e
     start_idx=-1
     end_idx=-1
     start_idx=raw_text.find("{")

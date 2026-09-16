@@ -10,10 +10,8 @@ import com.example.JobTracker.exception.ScraperConfigException;
 import com.example.JobTracker.validator.ScrapedJobValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -28,9 +26,6 @@ public class JobScrapingService {
         PythonScraperRequest scraperRequest = scraperConfigService.prepareRequest(request);
         List<ScrapedJobDto> scrapedJobs = pythonScraperClient.scrape(scraperRequest);
         ValidationResult validation = validate(scrapedJobs);
-
-        // A title or company extraction failure usually means the saved selectors are stale.
-        // Regenerate them from the search page and retry once in the same request.
         if (!validation.urlsNeedingReconfiguration().isEmpty()) {
             scraperConfigService.regenerateConfig(request.getDomain_name(), scraperRequest.getUrl());
             scraperRequest = scraperConfigService.prepareRequest(request);
@@ -50,10 +45,27 @@ public class JobScrapingService {
         }
 
         List<JobApplicationResponseDto> savedJobs = new ArrayList<>();
+        Set<String> seenJobs = new HashSet<>();
+        
         for (ScrapedJobDto scrapedJob : validation.validJobs()) {
-            JobApplicationResponseDto saved = jobApplicationService.createScrapedJob(scrapedJob);
-            if (saved != null) {
-                savedJobs.add(saved);
+            
+            String uniqueKey = scrapedJob.getApplication_url();
+            boolean alreadySeenInThisRun = !seenJobs.add(uniqueKey);
+
+            if (alreadySeenInThisRun) {
+                System.out.println("SKIPPED (duplicate in this scrape): " + scrapedJob.getJob_title() + " | " + scrapedJob.getApplication_url());
+                continue;
+            }
+
+            try {
+                JobApplicationResponseDto saved = jobApplicationService.createScrapedJob(scrapedJob);
+                if (saved != null) {
+                    savedJobs.add(saved);
+                }
+            } catch (com.example.JobTracker.exception.ResourceAlreadyExists e) {
+                System.out.println("SKIPPED (already in database): " + scrapedJob.getJob_title() + " | " + scrapedJob.getApplication_url());
+            } catch (Exception e) {
+                System.out.println("FAILED to save: " + scrapedJob.getJob_title() + " | reason: " + e.getMessage());
             }
         }
         return savedJobs;

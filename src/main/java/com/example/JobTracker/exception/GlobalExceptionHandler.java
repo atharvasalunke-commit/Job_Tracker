@@ -7,9 +7,14 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(ResourceNotFound.class)
     public ResponseEntity<String> resourceNotFound(ResourceNotFound ex) {
         return ResponseEntity.status(404).body(ex.getMessage());
@@ -46,7 +51,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGenericException(Exception ex) {
-        return ResponseEntity.status(500).body("An unexpected error occurred: " + ex.getMessage());
+        log.error("Unhandled exception", ex);
+        return ResponseEntity.status(500).body("An unexpected error occurred. Please try again.");
     }
 
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)

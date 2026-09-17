@@ -93,4 +93,4 @@ Open `http://localhost:8080` in a browser once both are running.
 
 - Docker Compose to run both services together with one command
 - Unit test coverage for the core service and validation logic
-- Expanding scraping support to additional job boards (RemoteOK/Remotive, both of which expose public JSON APIs and need no browser automation at all)
+- Expanding scraping support to new job sites 

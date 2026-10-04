@@ -63,15 +63,28 @@ JWT_SECRET=<output of: openssl rand -base64 48>
 docker compose up --build
 ```
 
-Open **http://localhost:8080**, create an account and search.
-Reset the database with `docker compose down -v`.
+Open [**http://localhost:8080**](http://localhost:8080), create an account and search.
+
+To stop the application:
+
+```bash
+docker compose down
+```
+
+To completely reset the database:
+
+```bash
+docker compose down -v
+```
+
+> `docker compose down -v` removes the MySQL volume and deletes the stored database data.
 
 ## API
 
 Everything except Register and Login needs `Authorization: Bearer <token>`.
 
 | Method | Endpoint | What it does |
-|---|---|---|
+| --- | --- | --- |
 | POST | `/api/account/Register` | Create account, returns JWT |
 | POST | `/api/account/Login` | Log in, returns JWT |
 | POST | `/api/scrape` | Search and save new jobs |
@@ -81,7 +94,7 @@ Everything except Register and Login needs `Authorization: Bearer <token>`.
 | PUT | `/api/jobs/softdelete/{id}` | Soft delete |
 | POST | `/api/jobs` | Add manually (admin only) |
 
-Search body:
+### Search request
 
 ```json
 {
@@ -96,17 +109,138 @@ Search body:
 
 ## Design Decisions
 
-- **Stateless JWT:** a filter validates the token on each request, no server sessions.
-- **Isolated data:** every query is scoped to the logged-in user.
-- **No duplicates:** each job stores a SHA-256 hash of its URL, checked per user.
-- **Separate scraper:** scraping is slow and depends on third-party sites, so failures show up as a clean `503` instead of crashing the app.
+### Separate scraping service
+
+The application separates job scraping from the main Spring Boot backend.
+
+**Spring Boot** is responsible for authentication, users, saved jobs, application tracking, database operations, and REST APIs.
+
+**Python FastAPI** is responsible for interacting with JobSpy and returning normalized job results to the backend.
+
+This keeps scraper-specific logic isolated from the core application and makes the two parts easier to change independently.
+
+### JobSpy instead of the previous custom scraper
+
+The current version uses **JobSpy** for supported job-board searches.
+
+The earlier custom Python scraper and LLM-based approach were removed from the current implementation. Using JobSpy keeps the scraping layer smaller and allows the project to focus on the application-management side of the system.
+
+### Stateless JWT authentication
+
+The backend uses JWT authentication rather than server-side sessions.
+
+Each protected request sends:
+
+```http
+Authorization: Bearer <token>
+```
+
+The JWT filter extracts the username, loads the corresponding user, and places the authenticated user into Spring Security's context.
+
+### User-scoped application data
+
+Saved jobs are associated with the logged-in user. This means application tracking is performed per account rather than using one shared global job list.
+
+### Persistent MySQL storage
+
+MySQL stores user and job/application data. Docker Compose uses a persistent volume so normal container restarts do not remove the database.
+
+### Best-effort job recency
+
+LinkedIn and Indeed do not expose posting information in exactly the same way.
+
+The scraper therefore handles them differently:
+
+- LinkedIn uses a recent-job window.
+- Indeed results are sorted by `date_posted`.
+- Recent Indeed results are preferred when available.
+- If no recent Indeed results are available, older results are retained instead of returning nothing.
+
+### Docker Compose
+
+The project runs as three services:
+
+```text
+app       → Spring Boot
+scraper   → FastAPI + JobSpy
+mysql     → MySQL
+```
+
+Docker Compose provides one setup for the complete application and also gives the services stable internal hostnames such as `mysql` and `scraper`.
+
+## How the Request Flows
+
+```text
+User
+  ↓
+Frontend
+  ↓
+Spring Boot API
+  ↓
+JWT Authentication
+  ↓
+POST /api/scrape
+  ↓
+Python FastAPI
+  ↓
+JobSpy
+  ↓
+LinkedIn / Indeed
+  ↓
+Cleaned job results
+  ↓
+Spring Boot
+  ↓
+MySQL
+  ↓
+Frontend
+```
+
+## Project Structure
+
+```text
+JobTracker/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/example/JobTracker/
+│   │   └── resources/
+│   │       └── static/
+│   └── test/
+│
+├── scraper-service/
+│   ├── main.py
+│   ├── scraper.py
+│   ├── requirements.txt
+│   └── Dockerfile
+│
+├── Dockerfile
+├── docker-compose.yml
+├── pom.xml
+└── README.md
+```
 
 ## Limitations
 
-- LinkedIn rate-limits heavily, so a search can return few or no results.
-- Recency is best-effort. If Indeed has nothing from the last day, older results are kept.
-- Only LinkedIn and Indeed are supported.
+- LinkedIn can return few or no results because availability and rate limits can change.
+- Job recency is best-effort.
+- Search results depend on what the supported job sites make available through JobSpy.
+- Only LinkedIn and Indeed are currently supported.
+- The application is currently packaged primarily for local/Dockerized use rather than a production deployment with HTTPS, monitoring, and cloud infrastructure.
+
+## Future Improvements
+
+- Support for additional job sites
+- More advanced search and sorting
+- Scheduled job searches
+- Job alerts and notifications
+- Improved scraper retry/error handling
+- Production deployment
+- HTTPS and domain configuration
+- Better monitoring and observability
 
 ## Author
 
-**Atharva Salunke**, second-year BCA student building backend projects with Spring Boot, Python and Docker.
+**Atharva Salunke**
+
+Second-year BCA student building backend-focused projects with Spring Boot, Python, MySQL, Docker, and REST APIs.

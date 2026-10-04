@@ -1,5 +1,6 @@
 package com.example.JobTracker.dto;
 
+import jakarta.validation.constraints.Email;
 import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
@@ -14,6 +15,6 @@ public class AccountRequest {
     @Size(min=3,max=100,message="password should have at least 3 and 100")
     private  String password;
     @NotEmpty
-    @jakarta.validation.constraints.Email(message="Invalid email format")
+    @Email(message="Invalid email format")
     private String email;
 }

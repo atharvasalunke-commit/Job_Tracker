@@ -12,7 +12,13 @@ public class WebClientConfigure {
     private String scraperUrl;
 
     @Bean
-    public WebClient scrapeWebClient(){
-        return WebClient.builder().baseUrl(scraperUrl).build();
+    public WebClient scrapeWebClient() {
+        return WebClient.builder()
+                .baseUrl(scraperUrl)
+                .codecs(configurer ->
+                        configurer.defaultCodecs()
+                                .maxInMemorySize(10 * 1024 * 1024)
+                )
+                .build();
     }
 }

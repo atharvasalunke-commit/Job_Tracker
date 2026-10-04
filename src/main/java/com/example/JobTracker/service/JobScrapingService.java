@@ -5,87 +5,70 @@ import com.example.JobTracker.dto.JobApplicationResponseDto;
 import com.example.JobTracker.dto.PythonScraperRequest;
 import com.example.JobTracker.dto.ScrapedJobDto;
 import com.example.JobTracker.dto.UserRequestDto;
-import com.example.JobTracker.exception.InvalidUrlException;
-import com.example.JobTracker.exception.ScraperConfigException;
-import com.example.JobTracker.validator.ScrapedJobValidator;
+import com.example.JobTracker.exception.PythonScraperException;
+import com.example.JobTracker.exception.ResourceAlreadyExists;
+
 import lombok.RequiredArgsConstructor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-
 public class JobScrapingService {
-    private final ScraperConfigService scraperConfigService;
+
+    private static final Logger log =
+            LoggerFactory.getLogger(JobScrapingService.class);
+
+    private static final int MAX_JOBS_TO_SAVE_PER_SCRAPE = 50;
+
     private final PythonScraperClient pythonScraperClient;
     private final JobApplicationService jobApplicationService;
-    private final ScrapedJobValidator validator;
 
-    public List<JobApplicationResponseDto> scrapeAndSaveJobs(UserRequestDto request) throws Exception {
-        PythonScraperRequest scraperRequest = scraperConfigService.prepareRequest(request);
-        List<ScrapedJobDto> scrapedJobs = pythonScraperClient.scrape(scraperRequest);
-        ValidationResult validation = validate(scrapedJobs);
-        if (!validation.urlsNeedingReconfiguration().isEmpty()) {
-            scraperConfigService.regenerateConfig(request.getDomain_name(), scraperRequest.getUrl());
-            scraperRequest = scraperConfigService.prepareRequest(request);
-            validation = validate(pythonScraperClient.scrape(scraperRequest));
-            if (!validation.urlsNeedingReconfiguration().isEmpty()) {
-                throw new ScraperConfigException("Could not extract valid job titles and companies after refreshing the scraper configuration");
-            }
+    public List<JobApplicationResponseDto> scrapeAndSaveJobs(UserRequestDto request) throws PythonScraperException {
+        PythonScraperRequest scraperRequest=new PythonScraperRequest();
+        scraperRequest.setSite_name(request.getSite_name());
+        scraperRequest.setSearch_term(request.getSearch_term());
+        scraperRequest.setLocation(request.getLocation());
+        scraperRequest.setUser_skills(request.getUser_skills());
+        scraperRequest.setJob_type(request.getJob_type());
+        scraperRequest.setIs_remote(request.getIs_remote());
+        List<ScrapedJobDto> scrapedJobs=pythonScraperClient.scrape(scraperRequest);
+        List<JobApplicationResponseDto> savedJobs=new ArrayList<>();
+        if (scrapedJobs == null || scrapedJobs.isEmpty()) {
+            log.info("Python scraper returned 0 jobs.");
+            return savedJobs;
         }
-
-        if (!validation.invalidUrls().isEmpty()) {
-            StringBuilder message = new StringBuilder();
-            for (Map.Entry<String, String> entry : validation.invalidUrls().entrySet()) {
-                message.append(entry.getKey()).append(": ")
-                        .append(entry.getValue()).append("\n");
+        log.info("Python scraper returned {} jobs.", scrapedJobs.size());
+        int savedCount = 0;
+        int duplicateCount = 0;
+        int failedCount = 0;
+        for (ScrapedJobDto scrapedJob : scrapedJobs) {
+            if (savedCount >= MAX_JOBS_TO_SAVE_PER_SCRAPE) {
+                log.info("Reached maximum of {} saved jobs.", MAX_JOBS_TO_SAVE_PER_SCRAPE);
+                break;
             }
-            throw new InvalidUrlException(message.toString());
-        }
-
-        List<JobApplicationResponseDto> savedJobs = new ArrayList<>();
-        Set<String> seenJobs = new HashSet<>();
-        
-        for (ScrapedJobDto scrapedJob : validation.validJobs()) {
-            
-            String uniqueKey = scrapedJob.getApplication_url();
-            boolean alreadySeenInThisRun = !seenJobs.add(uniqueKey);
-
-            if (alreadySeenInThisRun) {
-                System.out.println("SKIPPED (duplicate in this scrape): " + scrapedJob.getJob_title() + " | " + scrapedJob.getApplication_url());
-                continue;
-            }
-
             try {
-                JobApplicationResponseDto saved = jobApplicationService.createScrapedJob(scrapedJob);
+                JobApplicationResponseDto saved= jobApplicationService.createScrapedJob(scrapedJob);
                 if (saved != null) {
                     savedJobs.add(saved);
+                    savedCount++;
+                    log.info("SAVED: {} | {}", scrapedJob.getCompany_name(), scrapedJob.getJob_title());
                 }
-            } catch (com.example.JobTracker.exception.ResourceAlreadyExists e) {
-                System.out.println("SKIPPED (already in database): " + scrapedJob.getJob_title() + " | " + scrapedJob.getApplication_url());
+            } catch (ResourceAlreadyExists e) {
+                duplicateCount++;
+                log.info("DUPLICATE: {} | URL: {}", scrapedJob.getJob_title(), scrapedJob.getApplication_url());
             } catch (Exception e) {
-                System.out.println("FAILED to save: " + scrapedJob.getJob_title() + " | reason: " + e.getMessage());
+                failedCount++;
+                log.error("FAILED TO SAVE: {} | company={} | url={}", scrapedJob.getJob_title(), scrapedJob.getCompany_name(), scrapedJob.getApplication_url(), e);
             }
         }
+        log.info("SCRAPE COMPLETE | received={} | saved={} | duplicates={} | failed={}", scrapedJobs.size(), savedCount, duplicateCount, failedCount);
         return savedJobs;
     }
-
-    private ValidationResult validate(List<ScrapedJobDto> scrapedJobs) {
-        List<String> urlsNeedingReconfiguration = new ArrayList<>();
-        Map<String, String> invalidUrls = new HashMap<>();
-        List<ScrapedJobDto> validJobs = new ArrayList<>();
-        for (ScrapedJobDto job : scrapedJobs) {
-            if (validator.isValid(job, urlsNeedingReconfiguration, invalidUrls)) {
-                validJobs.add(job);
-            }
-        }
-        return new ValidationResult(validJobs, urlsNeedingReconfiguration, invalidUrls);
-    }
-
-    private record ValidationResult(
-            List<ScrapedJobDto> validJobs,
-            List<String> urlsNeedingReconfiguration,
-            Map<String, String> invalidUrls
-    ) {}
 }

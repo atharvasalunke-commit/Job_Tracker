@@ -1,220 +1,119 @@
-from urllib.parse import urljoin
-from playwright.sync_api import sync_playwright
-from playwright_stealth import Stealth
-import re
+import pandas as pd
+from jobspy import scrape_jobs
 
-TECH_SKILLS = {
-    "python", "java", "javascript", "typescript", "c++", "c#", "go", "golang", "rust", "ruby",
-    "swift", "kotlin", "scala", "php", "perl", "r", "matlab", "dart", "lua", "haskell",
-    "react", "angular", "vue", "svelte", "next.js", "nuxt", "node.js", "express", "django",
-    "flask", "spring", "spring boot", ".net", "rails", "laravel", "fastapi",
-    "aws", "azure", "gcp", "docker", "kubernetes", "terraform", "jenkins", "ci/cd",
-    "linux", "git", "github", "gitlab", "devops", "ansible", "nginx",
-    "sql", "mysql", "postgresql", "mongodb", "redis", "elasticsearch", "cassandra",
-    "dynamodb", "firebase", "graphql", "rest", "api",
-    "machine learning", "deep learning", "ai", "nlp", "tensorflow", "pytorch", "opencv",
-    "data science", "data engineering", "etl", "spark", "hadoop", "kafka", "airflow",
-    "html", "css", "sass", "tailwind", "bootstrap", "figma",
-    "ios", "android", "flutter", "react native",
-    "blockchain", "solidity", "web3", "smart contract",
-    "cybersecurity", "penetration testing", "soc", "siem",
-    "agile", "scrum", "jira", "microservices", "rabbitmq", "grpc"
-}
+SUPPORTED_SITES = {"linkedin", "indeed"}
+MAX_RESULTS = 20
 
+def _clean(value):
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return ""
+    return str(value).strip()
 
-def scraper(url,rules,user_skills,job_type):
+def scraper(site_name, search_term=None, location=None, user_skills=None, job_type=None, is_remote=None):
+    sites = []
 
-    with sync_playwright() as p:
-        print("1.Opening chromium browser")
-        browser=p.chromium.launch(headless=True)
+    for site in site_name or []:
+        site = _clean(site).lower()
 
-        print("setting up stealth user agent")
-        context=browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-        )
+        if site and site not in SUPPORTED_SITES:
+            raise ValueError(f"Unsupported job site: {site}")
 
-        print(f"2.navigating to {url}")
-        page=context.new_page()
-        Stealth().apply_stealth_sync(page)
+        if site and site not in sites:
+            sites.append(site)
 
-        job_list=[]
+    if not sites:
+        raise ValueError("Select at least one supported job site.")
+
+    query = [_clean(search_term)] if search_term else []
+
+    for skill in user_skills or []:
+        skill = _clean(skill)
+        if skill and skill not in query:
+            query.append(skill)
+
+    search_query = " ".join(query)
+
+    if not search_query:
+        raise ValueError("Provide a search term or at least one skill.")
+
+    all_jobs = []
+
+    for site in sites:
+        kwargs = {
+            "site_name": [site],
+            "search_term": search_query,
+            "location": location or None,
+            "results_wanted": MAX_RESULTS,
+            "verbose": 1
+        }
+
+        if site == "linkedin":
+            kwargs["hours_old"] = 24
+            kwargs["linkedin_fetch_description"] = True
+
+            if job_type:
+                kwargs["job_type"] = job_type
+
+            if is_remote is not None:
+                kwargs["is_remote"] = bool(is_remote)
 
         try:
-            page.goto(
-                url,
-                wait_until="domcontentloaded",
-                timeout=60000
-            )
-
-            print("waiting 20 seconds for react/js to hydrate")
-            page.wait_for_timeout(20000)
-
-            print(f"3.extracting some basic data from {url}")
-
-            job_cards=page.query_selector_all(
-                rules["card_selector"]
-            )
-
-            print(f"cards found ({len(job_cards)}) ->")
-
-            if not job_cards:
-                print("No job cards found. Selectors may need to be regenerated.")
-                return []
-
-            # DEBUG: Print first card's HTML so we can see the correct selectors
-            if job_cards:
-                first_card_html = job_cards[0].inner_html()
-                print(f"DEBUG FIRST CARD HTML:\n{first_card_html[:3000]}")
-
-            extracted_count=0
-
-            for i,card in enumerate(job_cards[:len(job_cards)]):
-
-                title_elem=card.query_selector(
-                    rules["title_selector"]
-                )
-
-                company_name_elem=card.query_selector(
-                    rules["company_selector"]
-                )
-
-                href_elem=card.query_selector(
-                    rules["link_selector"]
-                )
-
-                if title_elem and company_name_elem:
-                    title=title_elem.inner_text().strip()
-                    company_name=company_name_elem.inner_text().strip().split('\n')[0]
-                else:
-                    print("no job found")
-                    continue
-
-                if href_elem:
-                    raw_link=href_elem.get_attribute("href")
-
-                    if not raw_link:
-                        print("job link is empty")
-                        continue
-
-                    full_link=urljoin(url,raw_link)
-
-                else:
-                    print("no job link")
-                    continue
-
-                tag_elements=card.query_selector_all(
-                    rules["requirements_selector"]
-                )
-
-                requirement_list=[]
-
-                for tag in tag_elements:
-                    requirement_list.append(
-                        tag.inner_text().strip()
-                    )
-
-                requirement_string="|".join(
-                    requirement_list
-                )
-
-                if not requirement_string:
-                    requirement_string="no job_description found"
-
-                req_lower=requirement_string.lower()
-                title_low=title.lower()
-                type_low=job_type.lower()
-
-                extracted_count+=1
-
-                is_valid=True
-
-                is_internship=re.search(
-                    r'\b(intern|internship)\b',
-                    title_low
-                )
-
-                if type_low=="internship" and not is_internship and "internshala" not in url:
-                    is_valid=False
-
-                elif type_low=="job" and is_internship:
-                    is_valid=False
-
-                has_matched=False
-
-                if len(user_skills)==0:
-                    has_matched=True
-
-                else:
-                    searchable_text=(
-                        card.inner_text().lower()
-                        + "|"
-                        + req_lower
-                        + "|"
-                        + title_low
-                    )
-
-                    user_skill_found=False
-
-                    for skill in user_skills:
-                        pattern=(
-                            r'(?<!\w)'
-                            + re.escape(skill.lower())
-                            + r'(?!\w)'
-                        )
-
-                        if re.search(
-                            pattern,
-                            searchable_text
-                        ):
-                            user_skill_found=True
-                            break
-
-                    tech_hit_count=0
-
-                    for tech in TECH_SKILLS:
-                        pattern=(
-                            r'(?<!\w)'
-                            + re.escape(tech)
-                            + r'(?!\w)'
-                        )
-
-                        if re.search(
-                            pattern,
-                            searchable_text
-                        ):
-                            tech_hit_count+=1
-
-                    if user_skill_found and tech_hit_count>=1:
-                        has_matched=True
-
-                if is_valid and has_matched:
-
-                    job_data={
-                        "job_title":title,
-                        "company_name":company_name,
-                        "application_url":full_link,
-                        "job_description":requirement_string
-                    }
-
-                    job_list.append(job_data)
-
-        except TimeoutError:
-
-            print(
-                f"ERROR: The website {url} took too long to load "
-                f"(Cloudflare block or slow network)."
-            )
-
+            jobs = scrape_jobs(**kwargs)
         except Exception as e:
+            print(f"[SCRAPER] {site} failed: {e}")
+            continue
 
-            print(f"Unknown error: {e}")
+        if jobs is None or jobs.empty:
+            continue
 
-        print(
-            f"jobs extracted ({extracted_count}) "
-            f"-> jobs after skill filtering ({len(job_list)})"
-        )
+        if site == "indeed" and "date_posted" in jobs.columns:
+            jobs["date_posted"] = pd.to_datetime(
+                jobs["date_posted"],
+                errors="coerce"
+            )
 
-        print("5.closing browser")
-        browser.close()
+            jobs = jobs.sort_values(
+                "date_posted",
+                ascending=False,
+                na_position="last"
+            )
 
-        return job_list
+            yesterday = pd.Timestamp.now().normalize() - pd.Timedelta(days=1)
+            recent = jobs[jobs["date_posted"] >= yesterday]
+
+            if not recent.empty:
+                jobs = recent
+
+            if job_type and "job_type" in jobs.columns:
+                jobs = jobs[
+                    jobs["job_type"].astype(str).str.lower()
+                    == str(job_type).lower()
+                ]
+
+            if is_remote is not None and "is_remote" in jobs.columns:
+                jobs = jobs[jobs["is_remote"] == bool(is_remote)]
+
+        all_jobs.append(jobs)
+
+    if not all_jobs:
+        return []
+
+    jobs = pd.concat(all_jobs, ignore_index=True)
+    result = []
+
+    for _, job in jobs.iterrows():
+        title = _clean(job.get("title"))
+        company = _clean(job.get("company"))
+        url = _clean(job.get("job_url"))
+        description = _clean(job.get("description"))
+
+        if title and company and url:
+            result.append({
+                "company_name": company,
+                "job_title": title,
+                "job_description": description,
+                "application_url": url
+            })
+
+    print(f"[SCRAPER] Jobs found: {len(jobs)} | Jobs sent to Java: {len(result)}")
+    return result

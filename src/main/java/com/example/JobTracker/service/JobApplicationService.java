@@ -41,12 +41,16 @@ public class JobApplicationService {
     public JobApplicationResponseDto createScrapedJob(ScrapedJobDto Sjd) throws Exception {
         JobApplication target = mapper.toEntity2(Sjd);
         prepareNewObject(target, authService.getCurrentUser());
+        if(target.getUser()==null){
+            System.out.println("Your account is not login properly");
+            throw new ResourceNotFound("Your account is not login properly");
+        }
         if (validator.isDuplicate(target.getCode(), target.getUser())) {
-            throw new com.example.JobTracker.exception.ResourceAlreadyExists("You have already saved this job application.");
+            throw new ResourceAlreadyExists("You have already saved this job application.");
         }
         JobApplication body = repo.save(target);
         JobApplicationResponseDto response = mapper.toResponseDto(body);
-        response.setMessage("Created Job Application");
+        response.setMessage("Scraped Job Application");
         return response;
     }
 

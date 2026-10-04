@@ -36,7 +36,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/index.html", "/styles.css", "/app.js", "/favicon.ico").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/account/Register", "/api/account/Login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/config/scrape").hasAnyRole(Role.USER.name(), Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, "/api/scrape").hasAnyRole(Role.USER.name(), Role.ADMIN.name())
                         .requestMatchers(HttpMethod.GET, "/api/jobs", "/api/jobs/**").hasAnyRole(Role.USER.name(), Role.ADMIN.name())
                         .requestMatchers(HttpMethod.PUT, "/api/jobs/**").hasAnyRole(Role.USER.name(), Role.ADMIN.name())
                         .requestMatchers("/error").permitAll()

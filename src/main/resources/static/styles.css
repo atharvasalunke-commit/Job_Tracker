@@ -419,3 +419,129 @@ dialog::backdrop {
         justify-content: flex-end;
     }
 }
+
+
+/* ============================================================
+   Job-site picker
+   ============================================================ */
+.site-picker {
+    display: grid;
+    gap: .35rem;
+}
+
+.field-label {
+    color: #334155;
+    font-size: .9rem;
+    font-weight: 650;
+}
+
+.site-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+}
+
+.site-option {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    min-width: 0;
+    padding: .72rem .8rem;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+}
+
+.site-option:hover {
+    border-color: #93c5fd;
+    background: #f8fbff;
+}
+
+.site-option input {
+    width: auto;
+    margin: 0;
+    accent-color: var(--brand);
+}
+
+.site-option span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 680px) {
+    .shell {
+        width: min(100%, calc(100% - 1rem));
+        padding: 1rem 0 1.5rem;
+    }
+
+    .auth-card {
+        margin: 1rem auto;
+        padding: 1.25rem;
+    }
+
+    .app-header,
+    .section-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .app-header .button-secondary,
+    .section-heading .button-secondary {
+        width: 100%;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .site-options {
+        grid-template-columns: 1fr;
+    }
+
+    .pagination {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .pagination label {
+        width: 100%;
+    }
+
+    .page-actions {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .page-actions button {
+        flex: 1;
+    }
+
+    .job-card {
+        grid-template-columns: 1fr;
+    }
+
+    .job-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .job-actions select,
+    .job-actions button {
+        width: 100%;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+        min-height: 44px;
+    }
+
+    textarea {
+        min-height: 7rem;
+    }
+}

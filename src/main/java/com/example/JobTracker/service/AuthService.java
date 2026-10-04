@@ -1,5 +1,6 @@
 package com.example.JobTracker.service;
 
+import com.example.JobTracker.exception.TryAgainException;
 import lombok.RequiredArgsConstructor;
 import com.example.JobTracker.dto.AuthResponse;
 import com.example.JobTracker.dto.AccountRequest;
@@ -27,6 +28,13 @@ public class AuthService {
     private final PasswordEncoder passwordencoder;
     private final AuthenticationManager authenticationManager;
 
+    void prepareNewAccount(AccountRequest Request,User user){
+        user.setUsername(Request.getUsername());
+        user.setEmail(Request.getEmail());
+        user.setPassword_Hash(passwordencoder.encode(Request.getPassword()));
+        user.setRole(Role.USER);
+        user.setCreated_at();
+    }
    public AuthResponse register(AccountRequest Request) {
        Optional<User> temp=repo.findByUsername(Request.getUsername());
        Optional<User> temp2 = repo.findByEmail(Request.getEmail());
@@ -40,24 +48,23 @@ public class AuthService {
        prepareNewAccount(Request,user);
        repo.save(user);
        String jwt=jwtService.generateToken(user);
-       return new AuthResponse(jwt, user.getRole().name());
+       AuthResponse Response=new AuthResponse();
+       Response.setRole(user.getRole().name());
+       Response.setToken(jwt);
+       return Response;
    }
 
     public AuthResponse authenticate(LoginRequest Request) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(Request.getUsername(),Request.getPassword()));
-        User user=repo.findByUsername(Request.getUsername()).orElseThrow(()->new ResourceNotFound("User not found with this username"));
+        User user=repo.findByUsername(Request.getUsername()).orElseThrow(()->new TryAgainException("Try again"));
         String jwt=jwtService.generateToken(user);
-        return new AuthResponse(jwt, user.getRole().name());
+        AuthResponse Response=new AuthResponse();
+        Response.setRole(user.getRole().name());
+        Response.setToken(jwt);
+        return Response;
    }
 
     public User getCurrentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    }
-    void prepareNewAccount(AccountRequest Request,User user){
-        user.setUsername(Request.getUsername());
-        user.setEmail(Request.getEmail());
-        user.setPassword_Hash(passwordencoder.encode(Request.getPassword()));
-        user.setRole(Role.USER);
-        user.setCreated_at();
     }
 }

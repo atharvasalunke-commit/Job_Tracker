@@ -1,0 +1,8 @@
+.git
+.gitignore
+.env
+.idea
+target
+*.iml
+__pycache__
+.pytest_cache

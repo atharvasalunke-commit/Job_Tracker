@@ -1,46 +1,61 @@
-version: '3.8'
-
 services:
-  mysql-db:
+  mysql:
     image: mysql:8.4
     container_name: jobtracker-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: Job_Info
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+    restart: unless-stopped
 
-  scraper-service:
+    environment:
+      MYSQL_DATABASE: Job_Info
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -uadmin -p$$MYSQL_PASSWORD --silent"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  scraper:
     build:
       context: ./scraper-service
-    container_name: jobtracker-scraper
-    ports:
-      - "8001:8001"
-    environment:
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
 
-  jobtracker-backend:
+    container_name: jobtracker-scraper
+    restart: unless-stopped
+
+    expose:
+      - "8001"
+
+  app:
     build:
       context: .
-    container_name: jobtracker-backend
-    ports:
-      - "8080:8080"
-    environment:
-      - DB_URL=jdbc:mysql://mysql-db:3306/Job_Info?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      - DB_PASSWORD=${DB_PASSWORD}
-      - SCRAPER_URL=http://scraper-service:8001
-      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+
+    container_name: jobtracker-app
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
     depends_on:
-      mysql-db:
+      mysql:
         condition: service_healthy
-      scraper-service:
+      scraper:
         condition: service_started
 
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/Job_Info?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      DB_USERNAME: admin
+      SCRAPER_URL: http://scraper:8001
+
+    ports:
+      - "8080:8080"
+
 volumes:
-  mysql-data:
+  mysql_data:

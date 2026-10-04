@@ -1,96 +1,112 @@
 # JobTracker
 
-A job application tracker with an automated scraping pipeline — Spring Boot backend with JWT authentication and role-based access, and a decoupled Python microservice that scrapes job boards using Playwright, falling back to an LLM (Gemini) to generate CSS selectors for sites it hasn't seen before.
+Search LinkedIn and Indeed from one form, save the results to your account, and track each application from "Not applied" to "Offer".
 
-Built as a backend-focused portfolio project — the frontend is intentionally minimal (vanilla JS/HTML/CSS) since the goal was to demonstrate backend architecture, not frontend framework skill.
+Spring Boot + MySQL + JWT backend, with a separate Python FastAPI scraper (JobSpy), all started by one `docker compose up`.
 
-## Architecture
+<!-- Add a dashboard screenshot here: ![Dashboard](docs/dashboard.png) -->
 
+## Major Features
+
+```text
+                                                  ┌──────────────────────────────────┐
+                      ┌────────────────────────┐  │       Register and log in        │
+                   ┌──│    1. USER ACCOUNTS    │──│    Secure JWT authentication     │
+                   │  └────────────────────────┘  │  Users only see their own jobs   │
+                   │                              └──────────────────────────────────┘
+                   │
+                   │                              ┌──────────────────────────────────┐
+                   │  ┌────────────────────────┐  │       LinkedIn and Indeed        │
+                   ├──│     2. JOB SEARCH      │──│    Keyword, skills, location     │
+                   │  └────────────────────────┘  │    Job type and remote filter    │
+                   │                              └──────────────────────────────────┘
+                   │
+                   │                              ┌──────────────────────────────────┐
+┌────────────┐     │  ┌────────────────────────┐  │     Python FastAPI + JobSpy      │
+│ JOBTRACKER │─────┼──│   3. SCRAPER SERVICE   │──│   Separate from the main app     │
+└────────────┘     │  └────────────────────────┘  │   Focus on recent job postings   │
+                   │                              └──────────────────────────────────┘
+                   │
+                   │                              ┌──────────────────────────────────┐
+                   │  ┌────────────────────────┐  │       Jobs saved to MySQL        │
+                   ├──│ 4. TRACK APPLICATIONS  │──│      No duplicate listings       │
+                   │  └────────────────────────┘  │ Update status: Applied to Offer  │
+                   │                              └──────────────────────────────────┘
+                   │
+                   │                              ┌──────────────────────────────────┐
+                   │  ┌────────────────────────┐  │        One-command setup         │
+                   └──│       5. DOCKER        │──│      App, scraper and MySQL      │
+                      └────────────────────────┘  │    docker compose up --build     │
+                                                  └──────────────────────────────────┘
 ```
-                    ┌──────────────────────┐
-   Browser  ─────▶  │   Spring Boot API     │ ─────▶  MySQL
-  (static JS/HTML)  │  (JWT auth, REST API) │
-                    └──────────┬────────────┘
-                               │  WebClient (HTTP)
-                               ▼
-                    ┌──────────────────────┐
-                    │  Python / FastAPI     │
-                    │  Playwright scraper   │ ─────▶  Job board (Internshala, AuthenticJobs)
-                    │  + Gemini fallback    │ ─────▶  Gemini API (selector generation)
-                    └──────────────────────┘
-```
 
-The frontend is served directly from Spring Boot's static resources, so it talks to the API same-origin — no separate frontend server, no CORS configuration needed.
+## Tech Stack
 
-## Tech stack
+Java 21 · Spring Boot · Spring Security · JPA/Hibernate · MySQL 8.4 · Python 3.12 · FastAPI · JobSpy · Docker Compose
 
-**Backend**
-- Java, Spring Boot
-- Spring Security + JWT (stateless auth, role-based authorization)
-- Spring Data JPA / Hibernate
-- MySQL
-- MapStruct (DTO ↔ entity mapping)
-- WebClient (Spring's reactive HTTP client, used for synchronous calls to the Python service)
+## Quick Start
 
-**Scraper microservice**
-- Python, FastAPI
-- Playwright (headless browser automation)
-- Google Gemini API (LLM-assisted CSS selector generation for unconfigured sites)
-
-**Frontend**
-- Vanilla JavaScript, HTML, CSS — no build step, no framework
-
-## What it does
-
-- Register/login with JWT-based auth; roles (`USER` / `ADMIN`) gate different parts of the API
-- Trigger a scrape against a supported job board (currently Internshala and AuthenticJobs), filtered by skills and job type
-- Scraped listings are deduplicated and saved as job applications, with soft-delete and status tracking (Applied / Interview / Offer / Rejected)
-- Manually add, update, and track applications outside of scraping too
-- For a job site with no saved CSS-selector configuration yet, the backend calls the Python service, which asks Gemini to infer selectors from the page's HTML — then that configuration is cached for future scrapes of that domain
-
-## Interesting technical decisions
-
-- **Stateless JWT auth with authorization enforced independently on client and server.** The frontend hides admin-only UI based on the role stored client-side, but that's convenience only — every request is re-authorized server-side via Spring Security's role checks, regardless of what the UI shows or hides.
-- **Strategy pattern for per-site scraping logic**, with an LLM-based fallback. Known sites use verified, hardcoded selectors; unknown sites go through a Gemini-assisted selector-generation path, and the result is cached so the LLM call only happens once per domain.
-- **Deduplication is keyed on the application URL**, not on scraped text like the job description. Descriptions and titles are volatile and often repeat generic boilerplate across different postings — a stable identifier (the specific posting's URL) avoids false-positive "duplicate" detections that a text-based hash would produce.
-- **A self-healing scrape retry**: if a site's markup changes and selectors start returning malformed data (invalid URLs, empty titles), the backend detects that automatically and triggers Gemini to regenerate the selector configuration for that domain before retrying, instead of just failing.
-
-## Running it locally
-
-### Prerequisites
-- Java 21+, Maven
-- Python 3.10+
-- MySQL running locally
-- A Gemini API key (for the selector-generation fallback)
-
-### Backend
 ```bash
-# set required environment variables first
-export DB_USERNAME=root
-export DB_PASSWORD=your_mysql_password
-export JWT_SECRET=$(openssl rand -hex 32)
-
-mvn spring-boot:run
+git clone <your-repo-url>
+cd JobTracker
 ```
-The API runs on `http://localhost:8080` and also serves the frontend at that same address.
 
-### Scraper microservice
+Create a `.env` file (never commit it):
+
+```env
+DB_PASSWORD=choose_a_password
+MYSQL_ROOT_PASSWORD=choose_a_root_password
+JWT_SECRET=<output of: openssl rand -base64 48>
+```
+
 ```bash
-cd scraper-service
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-playwright install chromium
-
-export GEMINI_API_KEY=your_key_here
-python main.py
+docker compose up --build
 ```
-Runs on `http://localhost:8001`.
 
-Open `http://localhost:8080` in a browser once both are running.
+Open **http://localhost:8080**, create an account and search.
+Reset the database with `docker compose down -v`.
 
-## What's next
+## API
 
-- Docker Compose to run both services together with one command
-- Unit test coverage for the core service and validation logic
-- Expanding scraping support to new job sites 
+Everything except Register and Login needs `Authorization: Bearer <token>`.
+
+| Method | Endpoint | What it does |
+|---|---|---|
+| POST | `/api/account/Register` | Create account, returns JWT |
+| POST | `/api/account/Login` | Log in, returns JWT |
+| POST | `/api/scrape` | Search and save new jobs |
+| GET | `/api/jobs?page=0&size=10` | List your applications |
+| GET | `/api/jobs/{id}` | Get one |
+| PUT | `/api/jobs/{id}` | Update details or status |
+| PUT | `/api/jobs/softdelete/{id}` | Soft delete |
+| POST | `/api/jobs` | Add manually (admin only) |
+
+Search body:
+
+```json
+{
+  "site_name": ["linkedin", "indeed"],
+  "search_term": "Backend Developer",
+  "location": "Mumbai",
+  "user_skills": ["Java", "Spring Boot"],
+  "job_type": "internship",
+  "is_remote": null
+}
+```
+
+## Design Decisions
+
+- **Stateless JWT:** a filter validates the token on each request, no server sessions.
+- **Isolated data:** every query is scoped to the logged-in user.
+- **No duplicates:** each job stores a SHA-256 hash of its URL, checked per user.
+- **Separate scraper:** scraping is slow and depends on third-party sites, so failures show up as a clean `503` instead of crashing the app.
+
+## Limitations
+
+- LinkedIn rate-limits heavily, so a search can return few or no results.
+- Recency is best-effort. If Indeed has nothing from the last day, older results are kept.
+- Only LinkedIn and Indeed are supported.
+
+## Author
+
+**Atharva Salunke**, second-year BCA student building backend projects with Spring Boot, Python and Docker.
